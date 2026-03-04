@@ -1,0 +1,1573 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carpool Manager Pro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary: #6366f1;
+    --primary-glow: rgba(99, 102, 241, 0.5);
+    --secondary: #a855f7;
+    --surface: rgba(255, 255, 255, 0.03);
+    --surface-hover: rgba(255, 255, 255, 0.08);
+    --border: rgba(255, 255, 255, 0.08);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent-cyan: #22d3ee;
+    --accent-pink: #f472b6;
+    --danger: #ef4444;
+    --success: #10b981;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: #020617;
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Animated Background */
+.bg-mesh {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: 
+        radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 40% 60%, rgba(34, 211, 238, 0.1) 0%, transparent 50%);
+    animation: pulse 20s ease-in-out infinite;
+}
+
+.bg-noise {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    transition: left 0.7s;
+}
+
+.glass-card:hover::before {
+    left: 100%;
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Input Styling */
+.input-field {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 16px 20px;
+    color: var(--text-primary);
+    font-size: 15px;
+    transition: all 0.3s ease;
+    width: 100%;
+    outline: none;
+}
+
+.input-field:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.input-field::placeholder {
+    color: var(--text-secondary);
+}
+
+/* Vehicle Selection */
+.vehicle-card {
+    cursor: pointer;
+    position: relative;
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.vehicle-card.selected {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.2);
+}
+
+.vehicle-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--primary);
+    transition: all 0.3s ease;
+}
+
+.vehicle-card.selected .vehicle-icon {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    transform: scale(1.1);
+}
+
+.radio-indicator {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    margin-left: auto;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.vehicle-card.selected .radio-indicator {
+    border-color: var(--primary);
+    background: var(--primary);
+}
+
+.radio-indicator::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+}
+
+.vehicle-card.selected .radio-indicator::after {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Passenger Cards */
+.passenger-card {
+    padding: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.passenger-card.selected {
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(99, 102, 241, 0.1));
+    border-color: rgba(34, 211, 238, 0.5);
+}
+
+.passenger-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.passenger-card.selected .passenger-avatar {
+    background: linear-gradient(135deg, var(--accent-cyan), var(--primary));
+    border-color: transparent;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.passenger-card:hover .action-btn {
+    opacity: 1;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.action-btn.delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+/* Primary Button */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none;
+    border-radius: 16px;
+    padding: 18px 32px;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    transform: rotate(45deg);
+    transition: all 0.6s;
+    opacity: 0;
+}
+
+.btn-primary:hover::after {
+    animation: shimmer 0.6s ease-out;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); opacity: 0; }
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 10px 20px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+}
+
+.btn-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+.btn-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+}
+
+.btn-success:hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.5);
+}
+
+/* History Section */
+.history-card {
+    padding: 24px;
+    margin-bottom: 16px;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.trip-record {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.trip-record:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.trip-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.trip-date {
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.trip-amount {
+    font-weight: 600;
+    color: var(--accent-cyan);
+}
+
+.trip-passengers {
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.passenger-tag {
+    background: rgba(99, 102, 241, 0.15);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--primary);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+/* Individual trip delete button */
+.trip-delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s ease;
+    font-size: 12px;
+}
+
+.trip-record:hover .trip-delete-btn {
+    opacity: 1;
+}
+
+.trip-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+/* Stats Badge */
+.stat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-badge i {
+    color: var(--accent-cyan);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 16px 24px;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+/* Passenger Management Section */
+.passenger-management {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.unsaved-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #f59e0b;
+    font-size: 12px;
+    margin-left: 12px;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 32px;
+    max-width: 500px;
+    width: 90%;
+    transform: scale(0.9);
+    transition: all 0.3s ease;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .vehicle-card {
+        padding: 20px;
+    }
+    .passenger-card {
+        padding: 16px;
+    }
+    .action-btn {
+        opacity: 1;
+    }
+    .trip-delete-btn {
+        opacity: 1;
+    }
+    .history-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg-mesh"></div>
+<div class="bg-noise"></div>
+
+<div class="max-w-6xl mx-auto px-6 py-12">
+
+    <!-- Main Grid -->
+    <div class="grid lg:grid-cols-3 gap-8 mb-12">
+        
+        <!-- Left Column: Trip Configuration -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Date & Amount -->
+            <div class="glass-card p-6 animate-in stagger-1">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">
+                            <i class="far fa-calendar-alt mr-2"></i>Trip Date
+                        </label>
+                        <input type="date" id="tripDate" class="input-field">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">
+                            <i class="fas fa-rupee-sign mr-2"></i>Amount per Passenger
+                        </label>
+                        <input type="number" id="amount" value="110" class="input-field" placeholder="0">
+                        <p class="mt-2 text-sm text-gray-500" id="ratePreview">Rate per passenger: ₹110</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicle Selection -->
+            <div class="animate-in stagger-2">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <i class="fas fa-car text-indigo-400"></i>
+                    Select Vehicle
+                </h2>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <!-- Dzire -->
+                    <div onclick="selectVehicle('Dzire R.S', this)" class="vehicle-card glass-card" id="vehicle-dzire">
+                        <div class="vehicle-icon">
+                            <i class="fas fa-taxi"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-white">Dzire R.S</h3>
+                            <p class="text-sm text-gray-400 mt-1">
+                                Driver: <span id="driverA" class="text-indigo-300">Rajendra Gavale</span>
+                            </p>
+                            <button onclick="renameDriver(event, 'Dzire R.S')" class="text-xs text-gray-500 hover:text-yellow-400 mt-2 transition-colors">
+                                <i class="fas fa-pen mr-1"></i>Edit Driver
+                            </button>
+                        </div>
+                        <div class="radio-indicator"></div>
+                    </div>
+
+                    <!-- Swift -->
+                    <div onclick="selectVehicle('Swift R.B', this)" class="vehicle-card glass-card" id="vehicle-swift">
+                        <div class="vehicle-icon">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-white">Swift R.B</h3>
+                            <p class="text-sm text-gray-400 mt-1">
+                                Driver: <span id="driverB" class="text-indigo-300">R.B Sir</span>
+                            </p>
+                            <button onclick="renameDriver(event, 'Swift R.B')" class="text-xs text-gray-500 hover:text-yellow-400 mt-2 transition-colors">
+                                <i class="fas fa-pen mr-1"></i>Edit Driver
+                            </button>
+                        </div>
+                        <div class="radio-indicator"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Passengers -->
+            <div class="animate-in stagger-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold flex items-center gap-2">
+                        <i class="fas fa-users text-cyan-400"></i>
+                        Select Passengers
+                    </h2>
+                    <span id="selectedCount" class="stat-badge">
+                        <i class="fas fa-check-circle"></i>
+                        <span>0 selected</span>
+                    </span>
+                </div>
+
+                <div id="passengerList" class="grid md:grid-cols-2 gap-3 mb-4"></div>
+
+                <div class="glass-card p-4 flex gap-3">
+                    <input id="newPassenger" class="input-field flex-1" placeholder="Enter new passenger name...">
+                    <button onclick="addPassenger()" class="btn-primary px-6">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+
+                <!-- Passenger Management Section -->
+                <div class="passenger-management">
+                    <div class="flex justify-between items-center flex-wrap gap-3">
+                        <div class="flex items-center">
+                            <span class="text-sm text-gray-400">Manage passenger names</span>
+                            <span id="unsavedIndicator" class="unsaved-indicator" style="display: none;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                Unsaved changes
+                            </span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openPassengerManager()" class="btn-secondary">
+                                <i class="fas fa-users-cog"></i>
+                                Manage Names
+                            </button>
+                            <button onclick="saveAllPassengers()" class="btn-secondary btn-success" id="savePassengersBtn" style="display: none;">
+                                <i class="fas fa-save"></i>
+                                Save as Default
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Record Button -->
+            <button onclick="recordTrip()" class="btn-primary w-full text-lg animate-in stagger-3">
+                <i class="fas fa-check-circle mr-2"></i>
+                Record Trip
+            </button>
+
+        </div>
+        <!-- Right Column: Now Empty or can be used for something else -->
+        <div class="space-y-6">
+            <!-- This column is now available for future use -->
+        </div>
+    </div>
+
+    <!-- Detailed History -->
+    <div class="animate-in stagger-3">
+        <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+            <h2 class="text-2xl font-semibold flex items-center gap-2">
+                <i class="fas fa-receipt text-indigo-400"></i>
+                Detailed History
+            </h2>
+            <button onclick="confirmClearAllHistory()" class="btn-secondary btn-danger">
+                <i class="fas fa-trash-alt"></i>
+                Clear All History
+            </button>
+        </div>
+      <div class="grid md:grid-cols-2 gap-6" id="detailedHistory">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+</div>
+<!-- Passenger Manager Modal -->
+<div id="passengerModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title flex items-center gap-2">
+                <i class="fas fa-users-cog text-indigo-400"></i>
+                Manage Passengers
+            </h3>
+            <button onclick="closePassengerManager()" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-sm text-gray-400 mb-4">Edit passenger names below. Click "Save as Default" to persist changes.</p>
+        <div id="modalPassengerList" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+            <!-- Populated by JS -->
+        </div>
+        <div class="mt-6 flex gap-3">
+            <Button
+            onclick="closePassengerManager()" class="btn-secondary flex-1">
+                Cancel
+            </button>
+            <button onclick="saveFromModal()" class="btn-primary flex-1">
+                <i class="fas fa-save mr-2"></i>
+                Save as Default
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title flex items-center gap-2 text-red-400">
+                <i class="fas fa-exclamation-triangle"></i>
+                Confirm Action
+            </h3>
+        </div>
+        <p id="confirmMessage" class="text-gray-300 mb-6">Are you sure you want to proceed?</p>
+        <div class="flex gap-3">
+            <button onclick="closeConfirmModal()" class="btn-secondary flex-1">
+                Cancel
+            </button>
+            <button id="confirmActionBtn" class="btn-primary btn-danger flex-1">
+                Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast">
+    <div class="toast-icon">
+        <i class="fas fa-check"></i>
+    </div>
+    <div>
+        <h4 class="font-semibold text-white">Success</h4>
+        <p class="text-sm text-gray-400" id="toastMessage">Trip recorded successfully</p>
+    </div>
+</div>
+
+<script>
+// Default data
+const defaultVehicles = {
+    "Dzire R.S": "Rajendra Gavale",
+    "Swift R.B": "R.B Sir"
+};
+
+const defaultPassengers = ["Rajendra Gavale", "R.B Sir", "Kalpesh", "Harshad"];
+
+// State
+let vehicles = {};
+let passengers = [];
+let selectedVehicle = "";
+let selectedPassengers = [];
+let hasUnsavedChanges = false;
+let pendingChanges = { passengers: null, vehicles: null };
+
+// Initialize
+function initializeData() {
+    // Load vehicles from localStorage or use defaults
+    const savedVehicles = localStorage.getItem("vehicles");
+    if (savedVehicles) {
+        vehicles = JSON.parse(savedVehicles);
+    } else {
+        vehicles = { ...defaultVehicles };
+        saveVehicles();
+    }
+    
+    // Load passengers from localStorage or use defaults
+    const savedPassengers = localStorage.getItem("passengers");
+    if (savedPassengers) {
+        passengers = JSON.parse(savedPassengers);
+    } else {
+        passengers = [...defaultPassengers];
+        savePassengers();
+    }
+}
+
+// Save functions
+function saveVehicles() {
+    localStorage.setItem("vehicles", JSON.stringify(vehicles));
+}
+
+function savePassengers() {
+    localStorage.setItem("passengers", JSON.stringify(passengers));
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+    initializeData();
+    document.getElementById('tripDate').valueAsDate = new Date();
+    renderPassengers();
+    loadTrips();
+});
+
+// Format currency
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0
+    }).format(amount);
+};
+
+// Format date
+const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
+};
+// Amount input listener
+document.getElementById("amount").addEventListener("input", function() {
+    const val = this.value || 0;
+    document.getElementById("ratePreview").innerText = `Rate per passenger: ₹${val}`;
+});
+
+// Vehicle selection
+function selectVehicle(name, el) {
+    document.querySelectorAll(".vehicle-card").forEach(v => {
+        v.classList.remove("selected");
+    });
+    el.classList.add("selected");
+    selectedVehicle = name;
+    renderPassengers();
+    
+    // Animate selection
+    el.style.transform = "scale(0.98)";
+    setTimeout(() => el.style.transform = "", 150);
+}
+
+// Rename driver
+function renameDriver(e, vehicle) {
+    e.stopPropagation();
+    const newName = prompt("Enter driver name:", vehicles[vehicle]);
+    if (!newName || !newName.trim()) return;
+    
+    const trimmedName = newName.trim();
+    
+    // Update vehicle driver
+    vehicles[vehicle] = trimmedName;
+    // Add to passengers if not exists
+    if (!passengers.includes(trimmedName)) {
+        passengers.push(trimmedName);
+    }
+    
+    // Mark as unsaved
+    markUnsaved();
+    
+    document.getElementById("driverA").innerText = vehicles["Dzire R.S"];
+    document.getElementById("driverB").innerText = vehicles["Swift R.B"];
+    renderPassengers();
+    showToast("Driver updated. Don't forget to save!", "warning");
+}
+
+// Mark unsaved changes
+function markUnsaved() {
+    hasUnsavedChanges = true;
+    document.getElementById("unsavedIndicator").style.display = "inline-flex";
+    document.getElementById("savePassengersBtn").style.display = "inline-flex";
+}
+
+// Mark saved
+function markSaved() {
+    hasUnsavedChanges = false;
+    document.getElementById("unsavedIndicator").style.display = "none";
+    document.getElementById("savePassengersBtn").style.display = "none";
+}
+
+// Save all passengers
+function saveAllPassengers() {
+    saveVehicles();
+    savePassengers();
+    markSaved();
+    showToast("Passenger names saved as default");
+}
+
+// Render passengers
+function renderPassengers() {
+    const container = document.getElementById("passengerList");
+    container.innerHTML = "";
+    
+    const filteredPassengers = selectedVehicle 
+        ? passengers.filter(p => p !== vehicles[selectedVehicle])
+        : passengers;
+    
+    selectedPassengers = selectedPassengers.filter(p => filteredPassengers.includes(p));
+    updateSelectedCount();
+
+    filteredPassengers.forEach((name, index) => {
+        const card = document.createElement("div");
+        card.className = `passenger-card glass-card 
+        ${selectedPassengers.includes(name) ? 'selected' : ''}`;
+        card.style.animationDelay = `${index * 0.05}s`;
+        
+        const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        
+        card.innerHTML = `
+            <div class="flex items-center gap-3">
+                <div class="passenger-avatar">${initials}</div>
+                <span class="font-medium">${name}</span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="quickRenamePassenger(event, '${name}')" class="action-btn" title="Rename">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <button onclick="deletePassenger(event, '${name}')" class="action-btn delete" title="Remove">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        card.onclick = (e) => {
+            if (e.target.closest('.action-btn')) return;
+            togglePassenger(name, card);
+        };
+        
+        container.appendChild(card);
+    });
+}
+
+function togglePassenger(name, card) {
+    if (selectedPassengers.includes(name)) {
+        selectedPassengers = selectedPassengers.filter(p => p !== name);
+        card.classList.remove("selected");
+    } else {
+        selectedPassengers.push(name);
+        card.classList.add("selected");
+    }
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const count = selectedPassengers.length;
+    const badge = document.getElementById("selectedCount");
+    badge.innerHTML = `
+        <i class="fas ${count > 0 ? 'fa-check-circle text-cyan-400' : 'fa-circle text-gray-600'}"></i>
+        <span>${count} selected</span>
+    `;
+}
+
+// Quick rename passenger (marks as unsaved)
+function quickRenamePassenger(e, name) {
+    e.stopPropagation();
+    const newName = prompt("Rename passenger:", name);
+    if (!newName || !newName.trim()) return;
+    
+    const trimmedName = newName.trim();
+    
+    if (passengers.includes(trimmedName) && trimmedName !== name) {
+        showToast("A passenger with this name already exists", "error");
+        return;
+    }
+    
+    // Update passengers array
+    passengers = passengers.map(p => p === name ? trimmedName : p);
+    
+    // Update selected passengers
+    selectedPassengers = selectedPassengers.map(p => p === name ? trimmedName : p);
+    
+    // Update vehicles if this was a driver
+    Object.keys(vehicles).forEach(key => {
+        if (vehicles[key] === name) {
+            vehicles[key] = trimmedName;
+        }
+    });
+    
+    // Update UI
+    document.getElementById("driverA").innerText = vehicles["Dzire R.S"];
+    document.getElementById("driverB").innerText = vehicles["Swift R.B"];
+    
+    markUnsaved();
+    renderPassengers();
+    showToast("Passenger renamed. Don't forget to save!", "warning");
+}
+
+// Add passenger
+function addPassenger() {
+    const input = document.getElementById("newPassenger");
+    const name = input.value.trim();
+    
+    if (!name) {
+        showToast("Please enter a name", "error");
+        return;
+    }
+    if (passengers.includes(name)) {
+        showToast("Passenger already exists", "error");
+        return;
+    }
+    
+    passengers.push(name);
+    markUnsaved();
+    input.value = "";
+    renderPassengers();
+    showToast("Passenger added. Don't forget to save!", "warning");
+}
+
+// Delete passenger
+function deletePassenger(e, name) {
+    e.stopPropagation();
+    if (!confirm(`Remove ${name} from passengers?`)) return;
+    
+    passengers = passengers.filter(p => p !== name);
+    selectedPassengers = 
+    selectedPassengers.filter(p => p !== name);
+    markUnsaved();
+    renderPassengers();
+    showToast("Passenger removed. Don't forget to save!", "warning");
+}
+
+// Passenger Manager Modal
+function openPassengerManager() {
+    const modal = document.getElementById("passengerModal");
+    const list = document.getElementById("modalPassengerList");
+    
+    list.innerHTML = passengers.map((name, index) => `
+        <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+            <div class="passenger-avatar" style="width: 36px; height: 36px; font-size: 14px;">
+                ${name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+            </div>
+            <input type="text" 
+                   value="${name}" 
+                   class="input-field flex-1" 
+                   style="padding: 10px 14px; font-size: 14px;"
+                   onchange="updatePassengerName(${index}, this.value)"
+                   id="passenger-input-${index}">
+            <button 
+            onclick="removePassengerFromModal(${index})" class="action-btn delete" style="opacity: 1;" title="Remove">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `).join('');
+    
+    modal.classList.add("active");
+}
+
+function closePassengerManager() {
+    document.getElementById("passengerModal").classList.remove("active");
+}
+
+function updatePassengerName(index, newName) {
+    const trimmedName = newName.trim();
+    if (!trimmedName) {
+        showToast("Name cannot be empty", "error");
+        return;
+    }
+    
+    const oldName = passengers[index];
+    if (passengers.includes(trimmedName) && trimmedName !== oldName) {
+        showToast("A passenger with this name already exists", "error");
+        document.getElementById(`passenger-input-${index}`).value = oldName;
+        return;
+    }
+    
+    passengers[index] = trimmedName;
+    // Update vehicles if this was a driver
+    Object.keys(vehicles).forEach(key => {
+        if (vehicles[key] === oldName) {
+            vehicles[key] = trimmedName;
+        }
+    });
+    
+    document.getElementById("driverA").innerText = vehicles["Dzire R.S"];
+    document.getElementById("driverB").innerText = vehicles["Swift R.B"];
+    renderPassengers();
+}
+
+function removePassengerFromModal(index) {
+    const name = passengers[index];
+    if (!confirm(`Remove ${name}?`)) return;
+    
+    passengers.splice(index, 1);
+    selectedPassengers = selectedPassengers.filter(p => p !== name);
+    openPassengerManager(); // Refresh modal
+    renderPassengers();
+}
+
+function saveFromModal() {
+    saveVehicles();
+    savePassengers();
+    markSaved();
+    closePassengerManager();
+    loadTrips();
+    showToast("Passenger names saved as default");
+}
+
+// Record trip
+function recordTrip() {
+    const amount = parseFloat(document.getElementById("amount").value);
+    const date = document.getElementById("tripDate").value;
+    
+    if (!selectedVehicle) {
+        showToast("Please select a vehicle", "error");
+        return;
+    }
+    if (!amount || amount <= 0) {
+        showToast("Please enter valid amount", "error");
+        return;
+    }
+    if (!date) {
+        showToast("Please select date", "error");
+        return;
+    }
+    if (selectedPassengers.length === 0) {
+        showToast("Please select at least one passenger", "error");
+        return;
+    }
+    
+    const trip = {
+        id: Date.now(),
+        vehicle: selectedVehicle,
+        date: date,
+        perPassenger: amount,
+        total: amount * selectedPassengers.length,
+        passengers: [...selectedPassengers],
+        timestamp: new Date().toISOString()
+    };
+    
+    let trips = 
+    JSON.parse(localStorage.getItem("trips")) || [];
+    trips.unshift(trip);
+    localStorage.setItem("trips", JSON.stringify(trips));
+    
+    // Reset selections
+    selectedPassengers = [];
+    document.querySelectorAll(".passenger-card").forEach(c => c.classList.remove("selected"));
+    updateSelectedCount();
+    
+    loadTrips();
+    showToast(`Trip recorded: ${formatCurrency(trip.total)}`);
+}
+
+// Load trips
+function loadTrips() {
+    const trips = JSON.parse(localStorage.getItem("trips")) || [];
+    let dzireStats = {}, swiftStats = {};
+    let dzireTotal = 0, swiftTotal = 0;
+    
+    // Process stats
+    trips.forEach(trip => {
+        const isDzire = trip.vehicle === "Dzire R.S";
+        const stats = isDzire ? dzireStats : swiftStats;
+        
+        trip.passengers.forEach(p => {
+            if (!stats[p]) stats[p] = { trips: 0, total: 0, dates: [] };
+            stats[p].trips += 1;
+            stats[p].total += trip.perPassenger;
+            stats[p].dates.push({ date: trip.date, amount: trip.perPassenger, tripId: trip.id });
+        });
+        if (isDzire) dzireTotal += trip.total;
+        else swiftTotal += trip.total;
+    });
+    
+    // Render detailed history
+    renderDetailedHistory(dzireStats, swiftStats, dzireTotal, swiftTotal, trips);
+}
+
+function renderDetailedHistory(dzireStats, swiftStats, dzireTotal, swiftTotal, allTrips) {
+    const container = document.getElementById("detailedHistory");
+    
+    const renderCarHistory = (title, stats, total, icon, vehicleName) => {
+        const entries = Object.entries(stats);
+        if (entries.length === 0) {
+            return `
+                <div class="glass-card history-card">
+                <div class="history-header">
+                        <h3 class="font-bold text-lg flex items-center gap-2">
+                            <i class="fas ${icon} text-indigo-400"></i>
+                            ${title}
+                        </h3>
+                    </div>
+                    <div class="empty-state py-8">
+                        <i class="fas fa-inbox"></i>
+                        <p>No trips recorded</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Get all trips for this vehicle
+        const vehicleTrips = allTrips.filter(t => t.vehicle === vehicleName);
+        return `
+        <div class="glass-card history-card">
+                <div class="history-header">
+                    <div class="flex items-center gap-2">
+                        <i class="fas ${icon} text-indigo-400"></i>
+                        <h3 class="font-bold text-lg">${title}</h3>
+                    </div>
+                    <span class="text-xl font-bold text-cyan-400">${formatCurrency(total)}</span>
+                </div>
+                <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                    ${entries.map(([name, data]) => `
+                        <div class="p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                         <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center text-sm font-bold text-indigo-300">
+                                        ${name.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-white">${name}</p>
+                                        <p class="text-xs text-gray-400">${data.trips} trips</p>
+                                    </div>
+                                </div>
+                                <span class="font-bold text-cyan-400">${data.trips} trips</p>
+                                    </div>
+                                </div>
+                                <span class="font-bold text-cyan-400">${formatCurrency(data.total)}</span>
+                            </div>
+                            <div class="mt-3 space-y-1">
+                                ${data.dates.slice(-5).map(d => `
+                                    <div class="flex justify-between items-center text-xs text-gray-500 py-2 border-t border-white/5 group">
+                                        <span>${formatDate(d.date)}</span>
+                                        <div class="flex items-center gap-3">
+                                            <span>₹${d.amount}</span>
+                                            <button 
+                                            onclick="deleteSpecificTrip(${d.tripId})" 
+                                                    class="trip-delete-btn" 
+                                                    style="position: static; opacity: 0;"
+                                                    title="Delete this trip">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                                ${data.dates.length > 5 ? `<p class="text-xs text-gray-600 mt-1">+${data.dates.length - 5} more trips</p>` : ''}
+                                </div>
+                        </div>
+                    `).join('')}
+                    
+                    <!-- All Trips List for this vehicle -->
+                    <div class="mt-4 pt-4 border-t border-white/10">
+                        <p class="text-xs text-gray-500 mb-3 font-medium">All Trips</p>
+                        ${vehicleTrips.slice(0, 10).map(trip => `
+                            <div class="trip-record" style="padding: 12px; margin-bottom: 8px;">
+                                <button onclick="deleteSpecificTrip(${trip.id})" class="trip-delete-btn" title="Delete trip">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <div class="trip-meta" style="margin-bottom: 4px;">
+                                <div class="trip-date">
+                                        <i class="far fa-calendar"></i>
+                                        ${formatDate(trip.date)}
+                                    </div>
+                                    <div class="trip-amount">${formatCurrency(trip.total)}</div>
+                                </div>
+                                <div class="trip-passengers" style="font-size: 11px;">
+                                    ${trip.passengers.map(p => `<span class="passenger-tag" style="padding: 2px 8px; font-size: 11px;">${p}</span>`).join('')}
+                                </div>
+                                <div class="mt-1 text-xs text-gray-600">
+                                    ₹${trip.perPassenger}/person • 
+                                    ${trip.passengers.length} passengers
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${vehicleTrips.length > 10 ? `<p class="text-xs text-gray-600 text-center">+${vehicleTrips.length - 10} more trips</p>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+    
+    container.innerHTML = `
+        ${renderCarHistory('Dzire R.S History', dzireStats, dzireTotal, 'fa-taxi', 'Dzire R.S')}
+        ${renderCarHistory('Swift R.B History', swiftStats, swiftTotal, 'fa-car', 'Swift R.B')}
+    `;
+}
+function deleteSpecificTrip(id) {
+    if (!confirm("Delete this specific trip record?")) return;
+    
+    let trips = JSON.parse(localStorage.getItem("trips")) || [];
+    trips = trips.filter(t => t.id !== id);
+    localStorage.setItem("trips", JSON.stringify(trips));
+    loadTrips();
+    showToast("Trip deleted");
+}
+
+function confirmClearAllHistory() {
+    const modal = document.getElementById("confirmModal");
+    const message = document.getElementById("confirmMessage");
+    const actionBtn = document.getElementById("confirmActionBtn");
+    message.innerText = "Are you sure you want to clear ALL trip history? This action cannot be undone.";
+    actionBtn.onclick = function() {
+        localStorage.removeItem("trips");
+        loadTrips();
+        closeConfirmModal();
+        showToast("All history cleared");
+    };
+    
+    modal.classList.add("active");
+}
+
+function closeConfirmModal() {
+    document.getElementById("confirmModal").classList.remove("active");
+}
+
+// Toast notification
+function showToast(message, type = "success") {
+    const toast = document.getElementById("toast");
+    const icon = toast.querySelector(".toast-icon");
+    const msgEl = document.getElementById("toastMessage");
+    
+    if (type === "error") {
+        icon.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
+        icon.innerHTML = '<i class="fas fa-exclamation"></i>';
+    } else if (type === "warning") {
+        icon.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
+        icon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+    } else {
+        icon.style.background = "linear-gradient(135deg, #10b981, #059669)";
+        icon.innerHTML = '<i class="fas fa-check"></i>';
+    }
+    
+    msgEl.innerText = message;
+    toast.classList.add("show");
+    
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
+}
+
+// Close modals on outside click
+document.getElementById("passengerModal").addEventListener("click", function(e) {
+    if (e.target === this) closePassengerManager();
+});
+
+document.getElementById("confirmModal").addEventListener("click", function(e) {
+    if (e.target === this) closeConfirmModal();
+});
+// FIXED HISTORY RENDER FUNCTION
+function renderDetailedHistory(dzireStats, swiftStats, dzireTotal, swiftTotal, allTrips) {
+
+const container = document.getElementById("detailedHistory");
+
+function renderCar(title, stats, total, vehicleName, icon){
+
+const vehicleTrips = allTrips.filter(t => t.vehicle === vehicleName);
+
+if(Object.keys(stats).length === 0){
+return `
+<div class="glass-card history-card">
+<div class="history-header">
+<h3 class="font-bold text-lg flex items-center gap-2">
+<i class="fas ${icon} text-indigo-400"></i>
+${title}
+</h3>
+</div>
+
+<div class="empty-state">
+<i class="fas fa-inbox"></i>
+<p>No trips recorded</p>
+</div>
+</div>
+`;
+}
+
+return `
+<div class="glass-card history-card">
+
+<div class="history-header">
+<div class="flex items-center gap-2">
+<i class="fas ${icon} text-indigo-400"></i>
+<h3 class="font-bold text-lg">${title}</h3>
+</div>
+
+<span class="text-xl font-bold text-cyan-400">
+${formatCurrency(total)}
+</span>
+</div>
+
+<div class="space-y-3 max-h-96 overflow-y-auto pr-2">
+
+${Object.entries(stats).map(([name,data])=>`
+
+<div class="p-4 rounded-xl bg-white/5 border border-white/5">
+
+<div class="flex justify-between items-start mb-2">
+
+<div class="flex items-center gap-3">
+
+<div class="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center text-sm font-bold text-indigo-300">
+${name.substring(0,2).toUpperCase()}
+</div>
+
+<div>
+<p class="font-semibold text-white">${name}</p>
+<p class="text-xs text-gray-400">${data.trips} trips</p>
+</div>
+
+</div>
+
+<span class="font-bold text-cyan-400">
+${formatCurrency(data.total)}
+</span>
+
+</div>
+
+<div class="space-y-1">
+
+${data.dates.slice(-5).map(d=>`
+
+<div class="flex justify-between items-center text-xs text-gray-400 py-2 border-t border-white/5">
+
+<span>${formatDate(d.date)}</span>
+
+<div class="flex items-center gap-3">
+<span>₹${d.amount}</span>
+
+<button onclick="deleteSpecificTrip(${d.tripId})"
+class="trip-delete-btn"
+style="position:static">
+
+<i class="fas fa-times"></i>
+
+</button>
+
+</div>
+
+</div>
+
+`).join("")}
+
+</div>
+
+</div>
+
+`).join("")}
+
+
+
+</div>
+
+</div>
+`;
+}
+
+container.innerHTML =
+renderCar("Dzire R.S History",dzireStats,dzireTotal,"Dzire R.S","fa-taxi") +
+renderCar("Swift R.B History",swiftStats,swiftTotal,"Swift R.B","fa-car");
+
+}
+</script>
+
+</body>
+</html>'''
